@@ -1,6 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import testRouter from "./routes/testRoute.js";
 
 dotenv.config();
 
@@ -10,7 +11,7 @@ mongoose
   .catch((err) => console.error("DB connection error:", err));
 
 const app = express();
-
+app.use("/test", testRouter);
 app.listen(3000, () => {
   console.log("Server is Running at http://localhost:3000");
 });
