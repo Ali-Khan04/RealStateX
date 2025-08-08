@@ -1,7 +1,8 @@
 import User from "../models/userSchema.js";
 import bcrypt from "bcrypt";
+import { exceptionHandler } from "../utils/exceptionHandler.js";
 
-export const signUpAuth = async (req, res) => {
+export const signUpAuth = async (req, res, next) => {
   //console.log(req.body);
   const { username, email, password } = req.body;
   const hashedPassword = bcrypt.hashSync(password, 10);
@@ -10,7 +11,8 @@ export const signUpAuth = async (req, res) => {
     await newUser.save();
     res.status(201).json("User Created");
   } catch (err) {
-    res.status(500).send(err.message);
+    //next(exceptionHandler(500,"Our custom Error"));
+    next(err);
   }
 
   // res.send("Msg recieved!");
