@@ -1,6 +1,6 @@
 import User from "../models/userSchema.js";
 import bcrypt from "bcrypt";
-import { exceptionHandler } from "../utils/exceptionHandler.js";
+//import { exceptionHandler } from "../utils/exceptionHandler.js";
 
 export const signUpAuth = async (req, res, next) => {
   //console.log(req.body);
