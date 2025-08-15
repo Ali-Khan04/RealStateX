@@ -1,8 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function SignUp() {
+  const navigate = useNavigate();
   const [username, setUserName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,6 +35,9 @@ export default function SignUp() {
         headers: { "Content-type": "application/json" },
         body: JSON.stringify(userDetails),
       });
+      setTimeout(() => {
+        navigate("/signin");
+      }, 2000);
     } catch (err) {
       console.err(err);
     }
@@ -93,7 +98,7 @@ export default function SignUp() {
             }`}
           >
             {successMessage
-              ? "Account Created Successfully,Now Sign In!"
+              ? "Account Created Successfully"
               : "Error Creating Your Account"}
           </p>
         )}
