@@ -1,50 +1,61 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useReducer } from "react";
 import { useNavigate } from "react-router-dom";
-
+const initialState = {
+  username: "",
+  email: "",
+  password: "",
+  showPassword: false,
+  successMessage: null,
+};
+const reducer = (state, action) => {
+  switch (action.type) {
+    case "username":
+      return { ...state, username: action.payload };
+    case "email":
+      return { ...state, email: action.payload };
+    case "password":
+      return { ...state, password: action.payload };
+    case "showPassword":
+      return { ...state, showPassword: !state.showPassword };
+    case "successMessage":
+      return { ...state, successMessage: true };
+    case "errorMessage":
+      return { ...state, successMessage: false };
+    case "reset":
+      return initialState;
+    default:
+      return state;
+  }
+};
 export default function SignUp() {
   const navigate = useNavigate();
-  const [username, setUserName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [successMessage, setSuccessMessage] = useState(null);
-  const handleShowPassword = () => {
-    setShowPassword(!showPassword);
-  };
-  const handleUserName = (event) => {
-    setUserName(event.target.value);
-  };
-  const handleEmail = (event) => {
-    setEmail(event.target.value);
-  };
-  const handlePassword = (event) => {
-    setPassword(event.target.value);
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const handleInput = (e) => {
+    dispatch({ type: e.target.id, payload: e.target.value });
   };
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const userDetails = {
-      username,
-      email,
-      password,
-    };
+    const { username, email, password } = state;
     try {
-      await fetch("http://localhost:3000/auth/signup", {
+      const response = await fetch("http://localhost:3000/auth/signup", {
         method: "POST",
         headers: { "Content-type": "application/json" },
-        body: JSON.stringify(userDetails),
+        body: JSON.stringify({ username, email, password }),
       });
-      setTimeout(() => {
-        navigate("/signin");
-      }, 2000);
+      if (response.ok) {
+        dispatch({ type: "successMessage" });
+        setTimeout(() => {
+          navigate("/signin");
+          dispatch({ type: "reset" });
+        }, 2000);
+      } else {
+        dispatch({ type: "errorMessage" });
+      }
     } catch (err) {
-      console.err(err);
+      console.error(err);
     }
-    setUserName("");
-    setEmail("");
-    setPassword("");
-    setSuccessMessage(true);
   };
   return (
     <div className="max-w-md mx-auto mt-12 p-6 bg-white rounded-lg shadow-md">
@@ -57,32 +68,35 @@ export default function SignUp() {
           type="text"
           required
           placeholder="UserName"
-          value={username}
-          onChange={handleUserName}
+          value={state.username}
+          onChange={handleInput}
+          id="username"
         />
         <input
           className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
           type="email"
           required
           placeholder="Email"
-          value={email}
-          onChange={handleEmail}
+          value={state.email}
+          onChange={handleInput}
+          id="email"
         />
         <div className="relative">
           <input
             className="border border-gray-300 p-3 pr-12 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition w-full"
-            type={showPassword ? "text" : "password"}
+            type={state.showPassword ? "text" : "password"}
             required
             placeholder="Password"
-            value={password}
-            onChange={handlePassword}
+            value={state.password}
+            onChange={handleInput}
+            id="password"
           />
           <button
             type="button"
             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500 hover:text-gray-700"
-            onClick={handleShowPassword}
+            onClick={() => dispatch({ type: "showPassword" })}
           >
-            {showPassword ? "Hide" : "Show"}
+            {state.showPassword ? "Hide" : "Show"}
           </button>
         </div>
         <button
@@ -91,13 +105,13 @@ export default function SignUp() {
         >
           Sign Up
         </button>
-        {successMessage !== null && (
+        {state.successMessage !== null && (
           <p
             className={`text-center mt-4 font-medium ${
-              successMessage ? "text-green-600" : "text-red-600"
+              state.successMessage ? "text-green-600" : "text-red-600"
             }`}
           >
-            {successMessage
+            {state.successMessage
               ? "Account Created Successfully"
               : "Error Creating Your Account"}
           </p>
