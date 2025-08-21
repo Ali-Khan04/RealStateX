@@ -1,9 +1,29 @@
-import { FaSearch } from "react-icons/fa";
+import { FaSearch, FaUser } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth.jsx";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Header() {
+  const navigate = useNavigate();
   const { state, dispatch } = useAuth();
+  const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
+  const handleImageLoad = () => {
+    setImageLoaded(true);
+  };
+
+  const handleLogout = () => {
+    // First dispatch the logout action to clear user state
+    dispatch({ type: "LOGOUT" });
+    // Then navigate to signin page
+    navigate("/signin");
+  };
 
   return (
     <header className="bg-slate-300 shadow-md">
@@ -15,8 +35,9 @@ export default function Header() {
             <span className="text-slate-500">X</span>
           </h1>
         </Link>
+
         <div className="flex items-center gap-6">
-          <form className="bg-slate-100 p-1 rounded-lg flex items-center ">
+          <form className="bg-slate-100 p-1 rounded-lg flex items-center">
             <input
               type="text"
               placeholder="Search"
@@ -25,7 +46,7 @@ export default function Header() {
             <FaSearch className="text-slate-600" />
           </form>
 
-          <ul className="flex gap-4">
+          <ul className="flex gap-4 items-center">
             <Link to="/">
               <li className="text-slate-700 hover:underline cursor-pointer">
                 Home
@@ -38,20 +59,43 @@ export default function Header() {
             </Link>
 
             {state.user ? (
-              <div className="flex items-center gap-2">
-                <img
-                  src={state.user.avatar || "/default-avatar.png"}
-                  alt="user"
-                  className="w-8 h-8 rounded-full object-cover"
-                />
-                <span className="text-slate-700">{state.user.name}</span>
+              <li className="flex items-center gap-3">
+                <div className="relative">
+                  {!imageError && state.user.avatar ? (
+                    <>
+                      <img
+                        src={state.user.avatar}
+                        alt="user avatar"
+                        className={`w-8 h-8 rounded-full object-cover border-2 border-slate-400 shadow-sm transition-opacity duration-200 ${
+                          imageLoaded ? "opacity-100" : "opacity-0"
+                        }`}
+                        onError={handleImageError}
+                        onLoad={handleImageLoad}
+                        referrerPolicy="no-referrer"
+                        crossOrigin="anonymous"
+                      />
+                      {!imageLoaded && (
+                        <div className="absolute inset-0 w-8 h-8 rounded-full bg-slate-400 animate-pulse"></div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-slate-500 flex items-center justify-center">
+                      <FaUser className="text-white text-sm" />
+                    </div>
+                  )}
+                </div>
+
+                <span className="text-slate-700 font-medium max-w-32 truncate">
+                  {state.user.name}
+                </span>
+
                 <button
-                  onClick={() => dispatch({ type: "LOGOUT" })}
-                  className="text-red-600 hover:underline"
+                  onClick={handleLogout}
+                  className="text-red-600 hover:underline font-medium transition-colors duration-200 cursor-pointer"
                 >
                   Logout
                 </button>
-              </div>
+              </li>
             ) : (
               <Link to="/signin">
                 <li className="text-slate-700 hover:underline cursor-pointer">

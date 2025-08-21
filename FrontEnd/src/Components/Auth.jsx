@@ -1,12 +1,16 @@
 import { GoogleAuthProvider, getAuth, signInWithPopup } from "firebase/auth";
 import { app } from "../Firebase";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/useAuth";
 function Auth() {
+  const navigate = useNavigate();
+  const { dispatch } = useAuth();
   const handleGoogleAuth = async () => {
     try {
       const provider = new GoogleAuthProvider();
       const auth = getAuth(app);
       const res = await signInWithPopup(auth, provider);
-      const response = await fetch("http://localhost:3000/signup", {
+      const response = await fetch("http://localhost:3000/auth/google", {
         method: "POST",
         headers: { "Content-type": "application/json" },
         body: JSON.stringify({
@@ -15,6 +19,15 @@ function Auth() {
           photo: res.user.photoURL,
         }),
       });
+      dispatch({
+        type: "LOGIN",
+        payload: {
+          name: res.user.displayName,
+          email: res.user.email,
+          avatar: res.user.photoURL,
+        },
+      });
+      navigate("/");
     } catch (err) {
       console.log("Error in Google Authentication", err);
     }
