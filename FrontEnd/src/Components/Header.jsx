@@ -1,7 +1,10 @@
 import { FaSearch } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/useAuth.jsx";
 
 export default function Header() {
+  const { state, dispatch } = useAuth();
+
   return (
     <header className="bg-slate-300 shadow-md">
       <div className="flex justify-between items-center px-6 py-4 max-w-8xl mx-auto">
@@ -33,11 +36,29 @@ export default function Header() {
                 About
               </li>
             </Link>
-            <Link to="/signin">
-              <li className="text-slate-700 hover:underline cursor-pointer">
-                SignIn
-              </li>
-            </Link>
+
+            {state.user ? (
+              <div className="flex items-center gap-2">
+                <img
+                  src={state.user.avatar || "/default-avatar.png"}
+                  alt="user"
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+                <span className="text-slate-700">{state.user.name}</span>
+                <button
+                  onClick={() => dispatch({ type: "LOGOUT" })}
+                  className="text-red-600 hover:underline"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <Link to="/signin">
+                <li className="text-slate-700 hover:underline cursor-pointer">
+                  SignIn
+                </li>
+              </Link>
+            )}
           </ul>
         </div>
       </div>
