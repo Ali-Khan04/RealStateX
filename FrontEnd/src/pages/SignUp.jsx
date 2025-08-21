@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useReducer } from "react";
 import { useNavigate } from "react-router-dom";
+import Auth from "../Components/Auth";
 const initialState = {
   username: "",
   email: "",
@@ -116,6 +117,7 @@ export default function SignUp() {
               : "Error Creating Your Account"}
           </p>
         )}
+        <Auth />
       </form>
       <div className="mt-6 text-center text-gray-700">
         <p className="inline mr-2">Have an account?</p>

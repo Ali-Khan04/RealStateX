@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Auth from "../Components/Auth";
 
 export default function SignIn() {
   const navigate = useNavigate();
@@ -101,6 +102,7 @@ export default function SignIn() {
             {successMessage ? "Login successful!" : "Wrong Email or Password!"}
           </p>
         )}
+        <Auth />
       </form>
       <div className="mt-6 text-center text-gray-700">
         <p className="inline mr-2">No account?</p>
