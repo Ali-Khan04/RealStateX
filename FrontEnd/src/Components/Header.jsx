@@ -19,9 +19,7 @@ export default function Header() {
   };
 
   const handleLogout = () => {
-    // First dispatch the logout action to clear user state
     dispatch({ type: "LOGOUT" });
-    // Then navigate to signin page
     navigate("/signin");
   };
 
@@ -63,17 +61,19 @@ export default function Header() {
                 <div className="relative">
                   {!imageError && state.user.avatar ? (
                     <>
-                      <img
-                        src={state.user.avatar}
-                        alt="user avatar"
-                        className={`w-8 h-8 rounded-full object-cover border-2 border-slate-400 shadow-sm transition-opacity duration-200 ${
-                          imageLoaded ? "opacity-100" : "opacity-0"
-                        }`}
-                        onError={handleImageError}
-                        onLoad={handleImageLoad}
-                        referrerPolicy="no-referrer"
-                        crossOrigin="anonymous"
-                      />
+                      <Link to="/profile">
+                        <img
+                          src={state.user.avatar}
+                          alt="user avatar"
+                          className={`w-8 h-8 rounded-full object-cover border-2 border-slate-400 shadow-sm transition-opacity duration-200 ${
+                            imageLoaded ? "opacity-100" : "opacity-0"
+                          }`}
+                          onError={handleImageError}
+                          onLoad={handleImageLoad}
+                          referrerPolicy="no-referrer"
+                          crossOrigin="anonymous"
+                        />
+                      </Link>
                       {!imageLoaded && (
                         <div className="absolute inset-0 w-8 h-8 rounded-full bg-slate-400 animate-pulse"></div>
                       )}

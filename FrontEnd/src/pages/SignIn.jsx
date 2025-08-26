@@ -1,10 +1,10 @@
-import React from "react";
+import React, { useReducer } from "react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Auth from "../Components/Auth";
-
+import { useAuth } from "../context/useAuth";
 export default function SignIn() {
+  const { state, dispatch } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
@@ -37,6 +37,7 @@ export default function SignIn() {
       const data = await response.json();
 
       if (response.ok && data.success) {
+        dispatch({ type: "LOGIN", payload: data.user });
         setSuccessMessage(true);
         navigate("/");
       } else {
@@ -102,7 +103,6 @@ export default function SignIn() {
             {successMessage ? "Login successful!" : "Wrong Email or Password!"}
           </p>
         )}
-        <Auth />
       </form>
       <div className="mt-6 text-center text-gray-700">
         <p className="inline mr-2">No account?</p>
