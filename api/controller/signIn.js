@@ -21,7 +21,55 @@ export const signInAuth = async (req, res, next) => {
       expiresIn: "1d",
     });
 
-    const { hashedPassword, ...rest } = validUser._doc;
+    res
+      .cookie("token", token, {
+        httpOnly: true,
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      })
+      .status(200)
+      .json({
+        success: true,
+        user: {
+          _id: validUser._id,
+          username: validUser.username,
+          email: validUser.email,
+          avatar: validUser.avatar || "",
+          phone: validUser.phone || "",
+          bio: validUser.bio || "",
+        },
+      });
+  } catch (err) {
+    next(err);
+  }
+};
+export const google = async (req, res, next) => {
+  try {
+    let user = await User.findOne({ email: req.body.email });
+
+    if (!user) {
+      const generateUserPassword =
+        Math.random().toString(36).slice(-8) +
+        Math.random().toString(36).slice(-8);
+
+      const hashedPassword = bcrypt.hashSync(generateUserPassword, 10);
+
+      user = new User({
+        username:
+          req.body.name.replace(/\s+/g, "").toLowerCase() +
+          Math.floor(Math.random() * 10000),
+        email: req.body.email,
+        hashedPassword,
+        avatar: req.body.photo,
+      });
+
+      await user.save();
+    }
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
 
     res
       .cookie("token", token, {
@@ -31,65 +79,17 @@ export const signInAuth = async (req, res, next) => {
         sameSite: "strict",
       })
       .status(200)
-      .json({ success: true, user: rest });
-  } catch (err) {
-    next(err);
-  }
-};
-export const google = async (req, res, next) => {
-  try {
-    const validUser = await User.findOne({ email: req.body.email });
-
-    if (validUser) {
-      const token = jwt.sign({ id: validUser._id }, process.env.JWT_SECRET, {
-        expiresIn: "1d",
+      .json({
+        success: true,
+        user: {
+          _id: user._id,
+          username: user.username,
+          email: user.email,
+          avatar: user.avatar || "",
+          phone: user.phone || "",
+          bio: user.bio || "",
+        },
       });
-
-      const { hashedPassword, ...rest } = validUser._doc;
-
-      res
-        .cookie("token", token, {
-          httpOnly: true,
-          expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
-        })
-        .status(200)
-        .json({ success: true, user: rest });
-    } else {
-      const generateUserPassword =
-        Math.random().toString(36).slice(-8) +
-        Math.random().toString(36).slice(-8);
-
-      const hashedPassword = bcrypt.hashSync(generateUserPassword, 10);
-
-      const newUser = new User({
-        username:
-          req.body.name.replace(/\s+/g, "").toLowerCase() +
-          Math.floor(Math.random() * 10000),
-        email: req.body.email,
-        hashedPassword,
-        avatar: req.body.photo,
-      });
-
-      await newUser.save();
-
-      const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
-        expiresIn: "1d",
-      });
-
-      const { hashedPassword: hp, ...rest } = newUser._doc;
-
-      res
-        .cookie("token", token, {
-          httpOnly: true,
-          expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
-        })
-        .status(200)
-        .json({ success: true, user: rest });
-    }
   } catch (err) {
     next(err);
   }

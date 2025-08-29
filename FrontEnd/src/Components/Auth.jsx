@@ -19,13 +19,10 @@ function Auth() {
           photo: res.user.photoURL,
         }),
       });
+      const data = await response.json();
       dispatch({
         type: "LOGIN",
-        payload: {
-          name: res.user.displayName,
-          email: res.user.email,
-          avatar: res.user.photoURL,
-        },
+        payload: data.user,
       });
       navigate("/");
     } catch (err) {

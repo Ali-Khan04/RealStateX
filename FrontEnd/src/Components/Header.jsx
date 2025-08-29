@@ -86,7 +86,7 @@ export default function Header() {
                 </div>
 
                 <span className="text-slate-700 font-medium max-w-32 truncate">
-                  {state.user.name}
+                  {state.user.username}
                 </span>
 
                 <button

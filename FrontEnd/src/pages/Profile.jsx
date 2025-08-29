@@ -1,18 +1,22 @@
 import React, { useState } from "react";
 import { useAuth } from "../context/useAuth";
 import { FaUser, FaEdit, FaCamera } from "react-icons/fa";
+import { useRef } from "react";
 
 export default function Profile() {
-  const { state } = useAuth();
+  const { state, dispatch } = useAuth();
+  const fileRef = useRef(null);
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: state.user?.name || "",
+    username: state.user?.username || "",
     email: state.user?.email || "",
     phone: state.user?.phone || "",
     bio: state.user?.bio || "",
+    avatar: state.user?.avatar || "",
   });
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   const handleImageError = () => {
     setImageError(true);
@@ -29,27 +33,113 @@ export default function Profile() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    state.user = {
-      ...state.user,
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      bio: formData.bio,
-    };
-    setIsEditing(false);
+
+    try {
+      const response = await fetch(
+        `http://localhost:3000/profile/${state.user._id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: formData.username,
+            email: formData.email,
+            phone: formData.phone,
+            bio: formData.bio,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        dispatch({ type: "UPDATE_USER", payload: data.user });
+
+        setIsEditing(false);
+      } else {
+        console.error("Failed to update profile");
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+    }
   };
 
   const handleCancel = () => {
     setFormData({
-      name: state.user?.name || "",
+      username: state.user?.username || "",
       email: state.user?.email || "",
       phone: state.user?.phone || "",
       bio: state.user?.bio || "",
+      avatar: state.user?.avatar || "",
     });
     setIsEditing(false);
   };
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File size too large. Please choose a file under 5MB.");
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select a valid image file.");
+      return;
+    }
+
+    if (!state.user?._id) {
+      console.error("User ID not found");
+      alert("User session error. Please try logging in again.");
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64Image = reader.result;
+      try {
+        const response = await fetch(
+          `http://localhost:3000/profile/avatar/${state.user._id}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ avatar: base64Image }),
+          }
+        );
+
+        if (response.ok) {
+          setFormData((prev) => ({ ...prev, avatar: base64Image }));
+          if (updateUser) {
+            updateUser({ ...state.user, avatar: base64Image });
+          }
+
+          setImageError(false);
+          setImageLoaded(false);
+        } else {
+          const errorData = await response.json();
+          console.error("Upload failed:", errorData);
+          alert("Failed to update avatar. Please try again.");
+        }
+      } catch (err) {
+        console.error("Upload failed", err);
+        alert("Network error. Please check your connection and try again.");
+      } finally {
+        setIsUploadingAvatar(false);
+      }
+    };
+
+    reader.onerror = () => {
+      console.error("Failed to read file");
+      alert("Failed to read the selected file.");
+      setIsUploadingAvatar(false);
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const displayAvatar = formData.avatar || state.user.avatar;
 
   return (
     <div className="min-h-screen bg-slate-50 py-8">
@@ -60,10 +150,18 @@ export default function Profile() {
           <div className="relative px-8 pb-8">
             <div className="relative -mt-16 mb-6">
               <div className="relative inline-block">
-                {!imageError && state.user.avatar ? (
+                <input
+                  type="file"
+                  ref={fileRef}
+                  hidden
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  disabled={isUploadingAvatar}
+                />
+                {!imageError && displayAvatar ? (
                   <>
                     <img
-                      src={state.user.avatar}
+                      src={displayAvatar}
                       alt="Profile"
                       className={`w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg transition-opacity duration-200 ${
                         imageLoaded ? "opacity-100" : "opacity-0"
@@ -82,15 +180,36 @@ export default function Profile() {
                     <FaUser className="text-white text-4xl" />
                   </div>
                 )}
-                <button className="absolute bottom-2 right-2 bg-slate-600 hover:bg-slate-700 text-white p-2 rounded-full shadow-md transition-colors duration-200">
-                  <FaCamera className="text-sm" />
+                <button
+                  onClick={() => {
+                    if (!isUploadingAvatar) {
+                      fileRef.current.click();
+                    }
+                  }}
+                  disabled={isUploadingAvatar}
+                  className={`absolute bottom-2 right-2 ${
+                    isUploadingAvatar
+                      ? "bg-slate-400 cursor-not-allowed"
+                      : "bg-slate-600 hover:bg-slate-700 cursor-pointer"
+                  } text-white p-2 rounded-full shadow-md transition-colors duration-200`}
+                >
+                  <FaCamera
+                    className={`text-sm ${
+                      isUploadingAvatar ? "animate-pulse" : ""
+                    }`}
+                  />
                 </button>
+                {isUploadingAvatar && (
+                  <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                    Uploading...
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h1 className="text-3xl font-bold text-slate-800 mb-2">
-                  {state.user.name}
+                  {state.user.username || "Name not set"}
                 </h1>
                 <p className="text-slate-600">RealEstateX</p>
               </div>
@@ -114,15 +233,15 @@ export default function Profile() {
                   {isEditing ? (
                     <input
                       type="text"
-                      name="name"
-                      value={formData.name}
+                      name="username"
+                      value={formData.username}
                       onChange={handleInputChange}
                       className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent"
                       placeholder="Enter your full name"
                     />
                   ) : (
                     <div className="p-3 bg-slate-100 rounded-lg text-slate-700">
-                      {state.user.name || "Not provided"}
+                      {state.user.username || "Not provided"}
                     </div>
                   )}
                 </div>
@@ -220,19 +339,19 @@ export default function Profile() {
               </div>
               <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                 <span className="text-slate-700">Change Email</span>
-                <button className="text-slate-600 hover:text-slate-800 transition-colors duration- cursor-pointer">
+                <button className="text-slate-600 hover:text-slate-800 transition-colors duration-200 cursor-pointer">
                   Manage
                 </button>
               </div>
               <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                 <span className="text-slate-700">View Listings</span>
-                <button className="text-slate-600 hover:text-slate-800 transition-colors duration- cursor-pointer">
+                <button className="text-slate-600 hover:text-slate-800 transition-colors duration-200 cursor-pointer">
                   View
                 </button>
               </div>
               <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                 <span className="text-red-500">Delete Account</span>
-                <button className="text-red-700 hover:text-slate-800 transition-colors duration-200 cursor-pointer">
+                <button className="text-red-700 hover:text-red-800 transition-colors duration-200 cursor-pointer">
                   Delete
                 </button>
               </div>

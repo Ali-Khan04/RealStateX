@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 //import testRouter from "./routes/testRoute.js";
 import authRouter from "./routes/authRoute.js";
+import profileUpdateRouter from "./routes/UpdateProfileRoute.js";
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ app.use(
 app.use(express.json());
 //app.use("/test", testRouter);
 app.use("/auth", authRouter);
+app.use("/profile", profileUpdateRouter);
 
 // middlware for general error handleing
 app.use((err, req, res, next) => {
