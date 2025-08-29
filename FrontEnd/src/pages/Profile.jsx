@@ -246,24 +246,23 @@ export default function Profile() {
                   )}
                 </div>
                 <div>
-                  <label className="block text-slate-700 font-medium mb-2">
-                    Email Address
-                  </label>
-                  {isEditing ? (
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent"
-                      placeholder="Enter your email"
-                    />
-                  ) : (
-                    <div className="p-3 bg-slate-100 rounded-lg text-slate-700">
-                      {state.user.email || "Not provided"}
-                    </div>
-                  )}
+                  <label className="block text-slate-700 font-medium mb-2"></label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    disabled={
+                      state.user.authProvider === "google" || !isEditing
+                    }
+                    className={`w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent ${
+                      state.user.authProvider === "google"
+                        ? "bg-gray-100 cursor-not-allowed"
+                        : ""
+                    }`}
+                  />
                 </div>
+
                 <div>
                   <label className="block text-slate-700 font-medium mb-2">
                     Phone Number

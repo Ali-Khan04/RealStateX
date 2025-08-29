@@ -62,6 +62,7 @@ export const google = async (req, res, next) => {
         email: req.body.email,
         hashedPassword,
         avatar: req.body.photo,
+        authProvider: "google", // ✅ mark this as Google
       });
 
       await user.save();
@@ -88,6 +89,7 @@ export const google = async (req, res, next) => {
           avatar: user.avatar || "",
           phone: user.phone || "",
           bio: user.bio || "",
+          authProvider: user.authProvider, // ✅ send to frontend
         },
       });
   } catch (err) {
