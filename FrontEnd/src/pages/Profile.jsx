@@ -78,8 +78,9 @@ export default function Profile() {
   const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      alert("File size too large. Please choose a file under 5MB.");
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert("File size too large. Please choose a file under 2MB.");
       return;
     }
 
@@ -95,10 +96,7 @@ export default function Profile() {
     }
 
     setIsUploadingAvatar(true);
-
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const base64Image = reader.result;
+    const uploadAvatar = async (base64Image) => {
       try {
         const response = await fetch(
           `http://localhost:3000/profile/avatar/${state.user._id}`,
@@ -110,11 +108,12 @@ export default function Profile() {
         );
 
         if (response.ok) {
+          const data = await response.json();
           setFormData((prev) => ({ ...prev, avatar: base64Image }));
-          if (updateUser) {
-            updateUser({ ...state.user, avatar: base64Image });
-          }
-
+          dispatch({
+            type: "UPDATE_USER",
+            payload: { ...state.user, avatar: base64Image },
+          });
           setImageError(false);
           setImageLoaded(false);
         } else {
@@ -130,13 +129,28 @@ export default function Profile() {
       }
     };
 
-    reader.onerror = () => {
-      console.error("Failed to read file");
-      alert("Failed to read the selected file.");
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+
+    img.onload = () => {
+      const maxSize = 400;
+      const ratio = Math.min(maxSize / img.width, maxSize / img.height);
+      canvas.width = img.width * ratio;
+      canvas.height = img.height * ratio;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
+      uploadAvatar(compressedBase64);
+    };
+
+    img.onerror = () => {
+      console.error("Failed to load image for compression");
+      alert("Failed to process the image. Please try again.");
       setIsUploadingAvatar(false);
     };
 
-    reader.readAsDataURL(file);
+    img.src = URL.createObjectURL(file);
   };
 
   const displayAvatar = formData.avatar || state.user.avatar;
@@ -246,21 +260,42 @@ export default function Profile() {
                   )}
                 </div>
                 <div>
-                  <label className="block text-slate-700 font-medium mb-2"></label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    disabled={
-                      state.user.authProvider === "google" || !isEditing
-                    }
-                    className={`w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent ${
-                      state.user.authProvider === "google"
-                        ? "bg-gray-100 cursor-not-allowed"
-                        : ""
-                    }`}
-                  />
+                  <label className="block text-slate-700 font-medium mb-2">
+                    Email Address
+                    {state.user?.authProvider === "google" && (
+                      <span className="text-xs text-blue-600 ml-2">
+                        (Google Account)
+                      </span>
+                    )}
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      disabled={state.user?.authProvider === "google"}
+                      className={`w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent ${
+                        state.user?.authProvider === "google"
+                          ? "bg-gray-100 cursor-not-allowed text-gray-500"
+                          : ""
+                      }`}
+                      placeholder={
+                        state.user?.authProvider === "google"
+                          ? "Email managed by Google"
+                          : "Enter your email address"
+                      }
+                    />
+                  ) : (
+                    <div className="p-3 bg-slate-100 rounded-lg text-slate-700">
+                      {formData.email || "Not provided"}
+                      {state.user?.authProvider === "google" && (
+                        <span className="text-xs text-blue-600 ml-2">
+                          (Google)
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div>

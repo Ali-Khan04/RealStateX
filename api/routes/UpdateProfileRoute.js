@@ -31,19 +31,19 @@ router.post("/avatar/:userId", async (req, res) => {
     }
 
     user.avatar = avatar;
-    await user.save();
-
+    const savedUser = await user.save();
     res.status(200).json({
       message: "Avatar updated successfully",
+      avatarUrl: savedUser.avatar,
       user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        avatar: user.avatar,
+        _id: savedUser._id,
+        username: savedUser.username,
+        email: savedUser.email,
+        avatar: savedUser.avatar,
       },
     });
   } catch (err) {
-    console.error("Avatar update error:", err);
+    console.error("❌ Avatar update error:", err);
 
     if (err.name === "ValidationError") {
       return res

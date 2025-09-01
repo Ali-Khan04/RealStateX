@@ -62,9 +62,22 @@ export const google = async (req, res, next) => {
         email: req.body.email,
         hashedPassword,
         avatar: req.body.photo,
-        authProvider: "google", // ✅ mark this as Google
+        authProvider: "google",
       });
 
+      await user.save();
+    } else {
+      user.authProvider = "google";
+
+      const hasCustomAvatar =
+        user.avatar && user.avatar.startsWith("data:image/");
+      const isDefaultAvatar =
+        user.avatar ===
+        "https://media.istockphoto.com/id/1495088043/vector/user-profile-icon-avatar-or-person-icon-profile-picture-portrait-symbol-default-portrait.jpg?s=612x612&w=0&k=20&c=dhV2p1JwmloBTOaGAtaA3AW1KSnjsdMt7-U_3EZElZ0=";
+
+      if (!hasCustomAvatar || isDefaultAvatar || !user.avatar) {
+        user.avatar = req.body.photo || user.avatar;
+      }
       await user.save();
     }
 
@@ -89,7 +102,7 @@ export const google = async (req, res, next) => {
           avatar: user.avatar || "",
           phone: user.phone || "",
           bio: user.bio || "",
-          authProvider: user.authProvider, // ✅ send to frontend
+          authProvider: user.authProvider,
         },
       });
   } catch (err) {
