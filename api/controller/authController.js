@@ -21,6 +21,14 @@ export const signUpAuth = async (req, res, next) => {
       },
     });
   } catch (err) {
-    next(err);
+    if (err.code === 11000) {
+      const field = Object.keys(err.keyValue)[0];
+      return next(exceptionHandler(409, `${field} already exists`));
+    }
+    if (err.name === "ValidationError") {
+      const errors = Object.values(err.errors).map((e) => e.message);
+      return next(exceptionHandler(400, errors.join(", ")));
+    }
+    next(exceptionHandler(500, "Internal Server Error"));
   }
 };

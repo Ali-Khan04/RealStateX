@@ -4,16 +4,22 @@ const userSchema = new mongoose.Schema(
   {
     username: {
       type: String,
-      required: true,
+      required: [true, "Username is required"],
+      trim: true,
+      unique: true,
+      maxlength: [30, "Username cannot exceed 30 characters"],
+      minlength: [3, "Username must be at least 3 characters long"],
     },
     email: {
       type: String,
-      required: true,
+      required: [true, "Email is required"],
       unique: true,
+      match: [/.+@.+\..+/, "Please enter a valid email address"],
     },
     hashedPassword: {
       type: String,
       required: true,
+      minlength: [6, "Password must be at least 6 characters long"],
     },
     avatar: {
       type: String,
@@ -22,11 +28,15 @@ const userSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
+      minlength: [6, "Phone number must be at least 6 digits"],
+      maxlength: [15, "Phone number cannot exceed 15 digits"],
+      match: [/^\d+$/, "Phone number must contain only digits"],
       default: "",
     },
     bio: {
       type: String,
       default: "",
+      maxlength: [300, "Bio cannot exceed 300 characters"],
     },
     authProvider: {
       type: String,
