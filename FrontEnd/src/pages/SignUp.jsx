@@ -9,6 +9,7 @@ const initialState = {
   password: "",
   showPassword: false,
   successMessage: null,
+  passwordError: "",
 };
 const reducer = (state, action) => {
   switch (action.type) {
@@ -17,7 +18,17 @@ const reducer = (state, action) => {
     case "email":
       return { ...state, email: action.payload };
     case "password":
-      return { ...state, password: action.payload };
+      const password = action.payload;
+      let passwordError = "";
+      if (password.length > 0 && password.length < 6) {
+        passwordError = "Password must be at least 6 characters long";
+      }
+
+      return {
+        ...state,
+        password: password,
+        passwordError: passwordError,
+      };
     case "showPassword":
       return { ...state, showPassword: !state.showPassword };
     case "successMessage":
@@ -36,8 +47,21 @@ export default function SignUp() {
   const handleInput = (e) => {
     dispatch({ type: e.target.id, payload: e.target.value });
   };
+  const isFormValid = () => {
+    const { username, email, password } = state;
+    return (
+      username.trim().length > 0 &&
+      email.trim().length > 0 &&
+      password.length >= 6 &&
+      state.passwordError === ""
+    );
+  };
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (!isFormValid()) {
+      dispatch({ type: "errorMessage" });
+      return;
+    }
     const { username, email, password } = state;
     try {
       const response = await fetch("http://localhost:3000/auth/signup", {
@@ -56,6 +80,7 @@ export default function SignUp() {
       }
     } catch (err) {
       console.error(err);
+      dispatch({ type: "errorMessage" });
     }
   };
   return (
@@ -65,32 +90,78 @@ export default function SignUp() {
       </h1>
       <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
         <input
-          className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          className={`border p-3 rounded-lg focus:outline-none focus:ring-2 transition ${
+            state.usernameError
+              ? "border-red-500 focus:ring-red-500"
+              : "border-gray-300 focus:ring-blue-500"
+          }`}
           type="text"
           required
-          placeholder="UserName"
+          placeholder="Username (3-30 characters)"
           value={state.username}
           onChange={handleInput}
           id="username"
+          minLength="3"
+          maxLength="30"
         />
+        {state.usernameError && (
+          <p className="text-red-600 text-sm -mt-3">{state.usernameError}</p>
+        )}
+        {state.username.length > 0 && (
+          <div className="flex justify-between items-center -mt-3">
+            <span
+              className={`text-xs ${
+                state.username.length >= 3 && state.username.length <= 30
+                  ? "text-green-600"
+                  : "text-red-600"
+              }`}
+            >
+              {state.username.length >= 3 && state.username.length <= 30
+                ? "✓ Valid length"
+                : "Invalid length"}
+            </span>
+            <span
+              className={`text-xs ${
+                state.username.length > 25 ? "text-orange-600" : "text-gray-500"
+              }`}
+            >
+              {state.username.length}/30
+            </span>
+          </div>
+        )}
         <input
-          className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          className={`border p-3 rounded-lg focus:outline-none focus:ring-2 transition ${
+            state.emailError
+              ? "border-red-500 focus:ring-red-500"
+              : "border-gray-300 focus:ring-blue-500"
+          }`}
           type="email"
           required
-          placeholder="Email"
+          placeholder="Email (example@domain.com)"
           value={state.email}
           onChange={handleInput}
           id="email"
         />
+        {state.emailError && (
+          <p className="text-red-600 text-sm -mt-3">{state.emailError}</p>
+        )}
+        {state.email.length > 0 && !state.emailError && (
+          <p className="text-green-600 text-sm -mt-3">✓ Valid email format</p>
+        )}
         <div className="relative">
           <input
-            className="border border-gray-300 p-3 pr-12 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition w-full"
+            className={`border p-3 pr-12 rounded-lg focus:outline-none focus:ring-2 transition w-full ${
+              state.passwordError
+                ? "border-red-500 focus:ring-red-500"
+                : "border-gray-300 focus:ring-blue-500"
+            }`}
             type={state.showPassword ? "text" : "password"}
             required
-            placeholder="Password"
+            placeholder="Password (minimum 6 characters)"
             value={state.password}
             onChange={handleInput}
             id="password"
+            minLength="6"
           />
           <button
             type="button"
@@ -100,9 +171,48 @@ export default function SignUp() {
             {state.showPassword ? "Hide" : "Show"}
           </button>
         </div>
+        {state.passwordError && (
+          <p className="text-red-600 text-sm -mt-3">{state.passwordError}</p>
+        )}
+        {state.password.length > 0 && (
+          <div className="flex items-center gap-2 -mt-3">
+            <div className="flex gap-1">
+              <div
+                className={`h-1 w-6 rounded ${
+                  state.password.length >= 6 ? "bg-green-500" : "bg-red-500"
+                }`}
+              ></div>
+              <div
+                className={`h-1 w-6 rounded ${
+                  state.password.length >= 8 ? "bg-green-500" : "bg-gray-300"
+                }`}
+              ></div>
+              <div
+                className={`h-1 w-6 rounded ${
+                  state.password.length >= 10 ? "bg-green-500" : "bg-gray-300"
+                }`}
+              ></div>
+            </div>
+            <span className="text-xs text-gray-600">
+              {state.password.length >= 10
+                ? "Strong"
+                : state.password.length >= 8
+                ? "Good"
+                : state.password.length >= 6
+                ? "Fair"
+                : "Weak"}
+            </span>
+          </div>
+        )}
+
         <button
           type="submit"
-          className="bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition"
+          disabled={!isFormValid()}
+          className={`font-semibold py-3 rounded-lg transition ${
+            isFormValid()
+              ? "bg-blue-600 text-white hover:bg-blue-700"
+              : "bg-gray-400 text-gray-700 cursor-not-allowed"
+          }`}
         >
           Sign Up
         </button>

@@ -10,10 +10,7 @@ export const signInAuth = async (req, res, next) => {
     if (!validUser)
       return next(exceptionHandler(404, "Wrong Email or Password"));
 
-    const validPassword = bcrypt.compareSync(
-      password,
-      validUser.hashedPassword
-    );
+    const validPassword = bcrypt.compareSync(password, validUser.password);
     if (!validPassword)
       return next(exceptionHandler(404, "Wrong Email or Password"));
 
@@ -46,6 +43,14 @@ export const signInAuth = async (req, res, next) => {
 };
 export const google = async (req, res, next) => {
   try {
+    if (!req.body.email) {
+      return next(exceptionHandler(400, "Email is required"));
+    }
+
+    if (!req.body.name) {
+      return next(exceptionHandler(400, "Name is required"));
+    }
+
     let user = await User.findOne({ email: req.body.email });
 
     if (!user) {
@@ -60,7 +65,7 @@ export const google = async (req, res, next) => {
           req.body.name.replace(/\s+/g, "").toLowerCase() +
           Math.floor(Math.random() * 10000),
         email: req.body.email,
-        hashedPassword,
+        password: hashedPassword,
         avatar: req.body.photo,
         authProvider: "google",
       });
@@ -78,7 +83,8 @@ export const google = async (req, res, next) => {
       if (!hasCustomAvatar || isDefaultAvatar || !user.avatar) {
         user.avatar = req.body.photo || user.avatar;
       }
-      await user.save();
+
+      user = await user.save();
     }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
@@ -106,6 +112,14 @@ export const google = async (req, res, next) => {
         },
       });
   } catch (err) {
-    next(err);
+    if (err.name === "ValidationError") {
+      return next(exceptionHandler(400, err.message));
+    } else if (err.code === 11000) {
+      return next(exceptionHandler(409, "Email or username already exists"));
+    } else {
+      return next(
+        exceptionHandler(500, err.message || "Internal server error")
+      );
+    }
   }
 };

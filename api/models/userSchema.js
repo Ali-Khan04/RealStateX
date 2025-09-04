@@ -16,10 +16,11 @@ const userSchema = new mongoose.Schema(
       unique: true,
       match: [/.+@.+\..+/, "Please enter a valid email address"],
     },
-    hashedPassword: {
+    password: {
       type: String,
-      required: true,
-      minlength: [6, "Password must be at least 6 characters long"],
+      required: function () {
+        return this.authProvider === "local";
+      },
     },
     avatar: {
       type: String,
@@ -28,9 +29,6 @@ const userSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      minlength: [6, "Phone number must be at least 6 digits"],
-      maxlength: [15, "Phone number cannot exceed 15 digits"],
-      match: [/^\d+$/, "Phone number must contain only digits"],
       default: "",
     },
     bio: {
