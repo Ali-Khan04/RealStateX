@@ -18,6 +18,7 @@ function Auth() {
           email: res.user.email,
           photo: res.user.photoURL,
         }),
+        credentials: "include",
       });
       const data = await response.json();
       dispatch({

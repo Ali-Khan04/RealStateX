@@ -4,7 +4,8 @@ import dotenv from "dotenv";
 import cors from "cors";
 //import testRouter from "./routes/testRoute.js";
 import authRouter from "./routes/authRoute.js";
-import profileUpdateRouter from "./routes/UpdateProfileRoute.js";
+import updateUserProfileRouter from "./routes/UpdateProfileRoute.js";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 
@@ -21,9 +22,10 @@ app.use(
   })
 );
 app.use(express.json());
+app.use(cookieParser());
 //app.use("/test", testRouter);
 app.use("/auth", authRouter);
-app.use("/profile", profileUpdateRouter);
+app.use("/profile", updateUserProfileRouter);
 
 // middlware for general error handleing
 app.use((err, req, res, next) => {

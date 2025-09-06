@@ -22,8 +22,8 @@ export const signInAuth = async (req, res, next) => {
       .cookie("token", token, {
         httpOnly: true,
         expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: false,
+        sameSite: "lax",
       })
       .status(200)
       .json({
@@ -95,8 +95,8 @@ export const google = async (req, res, next) => {
       .cookie("token", token, {
         httpOnly: true,
         expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: false,
+        sameSite: "lax",
       })
       .status(200)
       .json({

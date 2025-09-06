@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useAuth } from "../context/useAuth";
 import { FaUser, FaEdit, FaCamera } from "react-icons/fa";
 import { useRef } from "react";
+import ConfirmModal from "../Components/confirmationModal";
 
 export default function Profile() {
   const { state, dispatch } = useAuth();
@@ -17,6 +18,9 @@ export default function Profile() {
     avatar: state.user?.avatar || "",
   });
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteProfileError, setDeleteProfileError] = useState(null);
 
   const handleImageError = () => {
     setImageError(true);
@@ -48,6 +52,7 @@ export default function Profile() {
             phone: formData.phone,
             bio: formData.bio,
           }),
+          credentials: "include",
         }
       );
 
@@ -104,6 +109,7 @@ export default function Profile() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ avatar: base64Image }),
+            credentials: "include",
           }
         );
 
@@ -154,6 +160,34 @@ export default function Profile() {
   };
 
   const displayAvatar = formData.avatar || state.user.avatar;
+  const handleDeleteProfile = async () => {
+    try {
+      setIsDeleting(true);
+      setDeleteProfileError(null);
+
+      const res = await fetch(
+        `http://localhost:3000/profile/delete/${state.user._id}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        dispatch({ type: "LOGOUT" });
+        window.location.href = "/";
+      } else {
+        setDeleteProfileError(data.message || "Failed to delete account.");
+      }
+    } catch (error) {
+      console.error("Error deleting profile:", error);
+      setDeleteProfileError("Network error. Please try again later.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 py-8">
@@ -385,10 +419,25 @@ export default function Profile() {
               </div>
               <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                 <span className="text-red-500">Delete Account</span>
-                <button className="text-red-700 hover:text-red-800 transition-colors duration-200 cursor-pointer">
+                <button
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                >
                   Delete
                 </button>
               </div>
+
+              <ConfirmModal
+                isOpen={isDeleteModalOpen}
+                title="Confirm Account Deletion"
+                message="Are you sure you want to delete your account? This action is permanent and cannot be undone."
+                confirmLabel="Delete"
+                cancelLabel="Cancel"
+                onConfirm={handleDeleteProfile}
+                onCancel={() => setIsDeleteModalOpen(false)}
+                isLoading={isDeleting}
+                errorMessage={deleteProfileError}
+              />
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
